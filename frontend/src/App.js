@@ -294,7 +294,7 @@ function App() {
 
   // FIXED: Load exhibitors on component mount (like your working version)
   useEffect(() => {
-    fetchExhibitors();
+    fetchExhibitors(true);
     fetchAbacusStatus();
   }, [fetchExhibitors, fetchAbacusStatus]);
 
