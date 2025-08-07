@@ -89,7 +89,7 @@ def extract_data_multiple_ways(api_key):
 def try_chatllm_approach(api_key):
     """Try getting data through ChatLLM since that works in the web interface"""
     client = ApiClient(api_key)
-    project_id = "7573ebd78"  # Your ChatLLM project
+    project_id = "16b4367d2c"  # Your ChatLLM project
     
     try:
         print("\n💬 Method 6: ChatLLM approach...")
