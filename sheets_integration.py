@@ -306,7 +306,7 @@ def test_sheets_integration():
     manager = GoogleSheetsManager()
     
     # Your sheet ID
-    sheet_id = "1Kl0VBJ_fCBawGzNZlDe9fuPkOvdb8ZgqQqjtEdTu2C4"
+    sheet_id = "1dYeok-Dy_7a03AhPDLV2NNmGbRNoCD3q0zaAHPwxxCE"
     
     try:
         # Test getting all exhibitors
