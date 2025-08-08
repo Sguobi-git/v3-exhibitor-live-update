@@ -679,16 +679,6 @@ function App() {
             
             {/* Right side - Action buttons */}
             <div className="flex items-center justify-end space-x-2 md:space-x-4 flex-shrink-0">
-              {/* NEW: Refresh All Data button */}
-              <button 
-                onClick={handleRefreshAll}
-                disabled={loadingExhibitors}
-                className="p-2 md:p-3 bg-teal-100 hover:bg-teal-200 text-teal-700 rounded-xl md:rounded-2xl transition-all duration-300 border border-teal-200 disabled:opacity-50"
-                title="Refresh All Data"
-              >
-                <RefreshCw className={`w-4 h-4 md:w-5 md:h-5 ${loadingExhibitors ? 'animate-spin' : ''}`} />
-              </button>
-              
               <button 
                 onClick={handleRefresh}
                 disabled={loading}
