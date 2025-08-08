@@ -683,7 +683,6 @@ function App() {
                 onClick={handleRefresh}
                 disabled={loading}
                 className="p-2 md:p-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl md:rounded-2xl transition-all duration-300 border border-gray-200 disabled:opacity-50"
-                title="Refresh Orders"
               >
                 <RefreshCw className={`w-4 h-4 md:w-5 md:h-5 ${loading ? 'animate-spin' : ''}`} />
               </button>
