@@ -4,8 +4,8 @@ import pandas as pd
 
 def extract_data_multiple_ways(api_key):
     client = ApiClient(api_key)
-    feature_group_id = "17146cd0e2"
-    dataset_id = "1b94bb184"
+    feature_group_id = "a87c8f35c"
+    dataset_id = "1318b5245a"
     
     print("🚀 Trying Multiple Data Extraction Methods...")
     
