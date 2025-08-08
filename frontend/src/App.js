@@ -108,7 +108,7 @@ function App() {
     });
   };
 
-  const API_BASE = 'https://exhibitor-backend.onrender.com/api';
+  const API_BASE = 'https://v3-exhibitor-live-update.onrender.com/api';
 
   // Actual Expo CCI Logo Component
   const ExpoLogo = ({ size = "large", color = "black" }) => {
@@ -128,26 +128,45 @@ function App() {
     );
   };
 
-  // FIXED: Use working fetchAbacusStatus logic from your old version
+  // ENHANCED: fetchAbacusStatus with cache control
   const fetchAbacusStatus = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/abacus-status`);
+      const response = await fetch(`${API_BASE}/abacus-status`, {
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
       const data = await response.json();
       setAbacusStatus(data);
       console.log('🤖 System Status:', data);
     } catch (error) {
       console.error('Error fetching system status:', error);
     }
-  }, [API_BASE]);
+  }, []);
 
-  // FIXED: Dynamic exhibitor loading with proper fallback (like your working version)
+  // ENHANCED: Dynamic exhibitor loading with better cache control
   const fetchExhibitors = useCallback(async (forceRefresh = false) => {
     setLoadingExhibitors(true);
     try {
       console.log('🏢 Fetching all exhibitors from Google Sheets...');
       
-      const url = `${API_BASE}/exhibitors${forceRefresh ? '?force_refresh=true' : ''}`;
-      const response = await fetch(url);
+      // Add timestamp to prevent browser caching
+      const timestamp = new Date().getTime();
+      const cacheBuster = forceRefresh ? `&t=${timestamp}` : '';
+      const url = `${API_BASE}/exhibitors${forceRefresh ? '?force_refresh=true' : ''}${cacheBuster}`;
+      
+      const response = await fetch(url, {
+        // Prevent browser caching
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -156,12 +175,22 @@ function App() {
       const data = await response.json();
       console.log('📊 Exhibitors Response:', data);
       
+      // Clear any existing cache first
+      if (forceRefresh) {
+        setExhibitors([]); // Clear current state
+      }
+      
       // Ensure data is an array and has content
       if (Array.isArray(data) && data.length > 0) {
         // Sort exhibitors alphabetically for consistent display
         const sortedExhibitors = data.sort((a, b) => a.name.localeCompare(b.name));
         setExhibitors(sortedExhibitors);
         console.log(`✅ Loaded ${sortedExhibitors.length} exhibitors dynamically`);
+        
+        if (forceRefresh) {
+          console.log('🔄 FORCE REFRESH: Fresh exhibitors loaded from Google Sheets');
+        }
+        return;
       } else {
         throw new Error('No exhibitors found in API response');
       }
@@ -169,22 +198,20 @@ function App() {
     } catch (error) {
       console.error('Error fetching exhibitors:', error);
       
-      // CRITICAL: Use same fallback pattern as your working version
-      // Fallback exhibitors with real names from your working code
-      const fallbackExhibitors = [
-        { name: 'nevetal', booth: '3005', total_orders: 3, delivered_orders: 1 },
-        { name: 'Saint Lucia Tourism Authority', booth: 'B-156', total_orders: 2, delivered_orders: 2 },
-        { name: 'Costa Rica', booth: 'C-089', total_orders: 1, delivered_orders: 0 },
-        { name: 'Discover Dominica Authority', booth: 'D-312', total_orders: 4, delivered_orders: 3 },
-        { name: 'Great Italy Tour & Events', booth: 'E-445', total_orders: 2, delivered_orders: 1 },
-        { name: 'Quench USA', booth: 'F-201', total_orders: 3, delivered_orders: 2 }
-      ];
-      setExhibitors(fallbackExhibitors);
-      console.log('⚠️ Using fallback exhibitors from your working version');
+      // Only use fallback if we have no existing data
+      if (exhibitors.length === 0) {
+        const fallbackExhibitors = [
+          { name: 'VIVA ABACUS', booth: '9999', total_orders: 1, delivered_orders: 0 },
+          { name: 'Test Company', booth: 'A-100', total_orders: 2, delivered_orders: 1 },
+          { name: 'Sample Exhibitor', booth: 'B-200', total_orders: 3, delivered_orders: 2 }
+        ];
+        setExhibitors(fallbackExhibitors);
+        console.log('⚠️ Using fallback exhibitors');
+      }
     } finally {
       setLoadingExhibitors(false);
     }
-  }, [API_BASE]);
+  }, []);
 
   // Filter exhibitors based on search term
   const filteredExhibitors = exhibitors.filter(exhibitor =>
@@ -255,7 +282,7 @@ function App() {
     }));
   }, []);
 
-  // FIXED: Use exact working fetchOrders logic from your old version
+  // ENHANCED: fetchOrders with better cache control
   const fetchOrders = useCallback(async (exhibitorName, forceRefresh = false) => {
     if (loading) return;
     
@@ -263,8 +290,20 @@ function App() {
     try {
       console.log(`🔍 Fetching orders for: ${exhibitorName}${forceRefresh ? ' (FORCE REFRESH)' : ''}`);
       
-      const url = `${API_BASE}/orders/exhibitor/${encodeURIComponent(exhibitorName)}${forceRefresh ? '?force_refresh=true' : ''}`;
-      const response = await fetch(url);
+      // Add cache busting
+      const timestamp = new Date().getTime();
+      const cacheBuster = forceRefresh ? `&t=${timestamp}` : '';
+      const url = `${API_BASE}/orders/exhibitor/${encodeURIComponent(exhibitorName)}${forceRefresh ? '?force_refresh=true' : ''}${cacheBuster}`;
+      
+      const response = await fetch(url, {
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
+      
       if (!response.ok) throw new Error('Failed to fetch orders');
       
       const data = await response.json();
@@ -282,23 +321,58 @@ function App() {
     } catch (error) {
       console.error('Error fetching orders:', error);
       
-      const fallbackOrders = createFallbackOrders(exhibitorName);
-      const sortedFallbackOrders = sortOrdersByStatus(fallbackOrders);
-      setOrders(sortedFallbackOrders);
-      setLastUpdated(new Date());
-      generateNotifications(sortedFallbackOrders);
+      // Only fallback if we have no existing orders
+      if (orders.length === 0) {
+        const fallbackOrders = createFallbackOrders(exhibitorName);
+        const sortedFallbackOrders = sortOrdersByStatus(fallbackOrders);
+        setOrders(sortedFallbackOrders);
+        setLastUpdated(new Date());
+        generateNotifications(sortedFallbackOrders);
+      }
     } finally {
       setLoading(false);
     }
-  }, [API_BASE, generateNotifications, createFallbackOrders, loading]); // CRITICAL FIX: Remove sortOrdersByStatus from dependencies
+  }, [generateNotifications, createFallbackOrders, loading]);
 
-  // FIXED: Load exhibitors on component mount (like your working version)
+  // NEW: Clear cache function
+  const clearAppCache = useCallback(async () => {
+    try {
+      console.log('🗑️ Clearing all caches...');
+      
+      // Clear backend cache
+      await fetch(`${API_BASE}/clear-cache`, { method: 'POST' });
+      
+      // Clear frontend state
+      setExhibitors([]);
+      setOrders([]);
+      setNotifications([]);
+      
+      // Force refresh exhibitors
+      console.log('🔄 Refreshing exhibitors...');
+      await fetchExhibitors(true);
+      
+      console.log('✅ Cache cleared and data refreshed!');
+    } catch (error) {
+      console.error('Error clearing cache:', error);
+    }
+  }, [fetchExhibitors]);
+
+  // ENHANCED: App initialization with better loading
   useEffect(() => {
-    fetchExhibitors(true);
-    fetchAbacusStatus();
-  }, [fetchExhibitors, fetchAbacusStatus]);
+    const initializeApp = async () => {
+      console.log('🚀 Initializing app with fresh data...');
+      
+      // Always force refresh on app start
+      await fetchExhibitors(true);
+      await fetchAbacusStatus();
+      
+      console.log('✅ App initialization complete');
+    };
+    
+    initializeApp();
+  }, []); // Empty dependency array for mount only
 
-  // FIXED: Use exact working useEffect logic from your old version
+  // ENHANCED: Load orders when exhibitor selected
   useEffect(() => {
     if (isLoggedIn && selectedExhibitor) {
       const exhibitor = exhibitors.find(e => e.name === selectedExhibitor);
@@ -313,7 +387,7 @@ function App() {
         return () => clearInterval(interval);
       }
     }
-  }, [isLoggedIn, selectedExhibitor]); // CRITICAL FIX: Remove exhibitors and fetchOrders from dependencies
+  }, [isLoggedIn, selectedExhibitor, exhibitors, fetchOrders]);
 
   const handleLogin = () => {
     if (selectedExhibitor) {
@@ -329,6 +403,12 @@ function App() {
         fetchOrders(exhibitor.name, true);
       }
     }
+  };
+
+  // NEW: Refresh all data
+  const handleRefreshAll = async () => {
+    console.log('🔄 Refreshing all data...');
+    await clearAppCache();
   };
 
   const renderProgressBar = (status) => {
@@ -398,9 +478,20 @@ function App() {
                 <label className="block text-sm font-medium text-gray-700">
                   Select Your Company
                 </label>
-                <span className="text-xs text-gray-500">
-                  {loadingExhibitors ? 'Loading...' : `${filteredExhibitors.length} of ${exhibitors.length} companies`}
-                </span>
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs text-gray-500">
+                    {loadingExhibitors ? 'Loading...' : `${filteredExhibitors.length} of ${exhibitors.length} companies`}
+                  </span>
+                  {/* NEW: Refresh button on login page */}
+                  <button 
+                    onClick={() => fetchExhibitors(true)}
+                    disabled={loadingExhibitors}
+                    className="p-1 text-gray-400 hover:text-teal-600 transition-colors disabled:opacity-50"
+                    title="Refresh exhibitors"
+                  >
+                    <RefreshCw className={`w-3 h-3 ${loadingExhibitors ? 'animate-spin' : ''}`} />
+                  </button>
+                </div>
               </div>
 
               {/* Search Bar */}
@@ -588,19 +679,32 @@ function App() {
             
             {/* Right side - Action buttons */}
             <div className="flex items-center justify-end space-x-2 md:space-x-4 flex-shrink-0">
+              {/* NEW: Refresh All Data button */}
+              <button 
+                onClick={handleRefreshAll}
+                disabled={loadingExhibitors}
+                className="p-2 md:p-3 bg-teal-100 hover:bg-teal-200 text-teal-700 rounded-xl md:rounded-2xl transition-all duration-300 border border-teal-200 disabled:opacity-50"
+                title="Refresh All Data"
+              >
+                <RefreshCw className={`w-4 h-4 md:w-5 md:h-5 ${loadingExhibitors ? 'animate-spin' : ''}`} />
+              </button>
+              
               <button 
                 onClick={handleRefresh}
                 disabled={loading}
                 className="p-2 md:p-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl md:rounded-2xl transition-all duration-300 border border-gray-200 disabled:opacity-50"
+                title="Refresh Orders"
               >
                 <RefreshCw className={`w-4 h-4 md:w-5 md:h-5 ${loading ? 'animate-spin' : ''}`} />
               </button>
+              
               <div className="relative">
                 <Bell className="w-5 h-5 md:w-6 md:h-6 text-gray-600 cursor-pointer hover:text-teal-600 transition-colors" />
                 {notifications.length > 0 && (
                   <div className="absolute -top-1 -right-1 w-3 h-3 bg-teal-500 rounded-full animate-pulse"></div>
                 )}
               </div>
+              
               <button 
                 onClick={() => setIsLoggedIn(false)}
                 className="px-3 py-2 md:px-6 md:py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl md:rounded-2xl transition-all duration-300 border border-gray-200 text-sm md:text-base"
@@ -789,7 +893,7 @@ function App() {
             Expo Convention Contractors Inc. • Professional Exhibition Management • Miami, Florida
           </p>
           <div className="mt-4 text-xs text-gray-400">
-            ExpoFlow v3.0 • Real-time Order Tracking System
+            ExpoFlow v3.0 • Real-time Order Tracking System • Enhanced Cache Management
           </div>
         </div>
       </div>
